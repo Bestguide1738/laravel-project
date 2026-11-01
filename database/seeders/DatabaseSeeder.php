@@ -6,10 +6,11 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    // Order matters: courses need lecturers, registrations need students and courses.
+    // Roles must exist before any user is given one.
     public function run(): void
     {
         $this->call([
+            RolesAndPermissionsSeeder::class,
             UserSeeder::class,
             LecturerSeeder::class,
             CourseSeeder::class,

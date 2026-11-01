@@ -12,26 +12,24 @@ class StudentSeeder extends Seeder
     public function run(): void
     {
         $students = [
-            ['name' => 'Amina Kato',    'registration_number' => '2400101', 'programme' => 'BSc Computer Science',     'email' => 'amina.kato@university.ac.ug',    'year' => 1],
-            ['name' => 'Brian Okello',  'registration_number' => '2400102', 'programme' => 'BSc Mathematics',          'email' => 'brian.okello@university.ac.ug',  'year' => 1],
-            ['name' => 'Carol Namuli',  'registration_number' => '2400103', 'programme' => 'BSc Information Systems',  'email' => 'carol.namuli@university.ac.ug',  'year' => 2],
-            ['name' => 'David Mugabi',  'registration_number' => '2400104', 'programme' => 'BSc Statistics',           'email' => 'david.mugabi@university.ac.ug',  'year' => 2],
-            ['name' => 'Esther Atim',   'registration_number' => '2400105', 'programme' => 'BSc Computer Science',     'email' => 'esther.atim@university.ac.ug',   'year' => 3],
-            ['name' => 'Felix Ochieng', 'registration_number' => '2400106', 'programme' => 'BSc Information Systems',  'email' => 'felix.ochieng@university.ac.ug', 'year' => 1],
+            ['name' => 'Amina Kato',    'registration_number' => '2400101', 'programme' => 'BSc Computer Science',    'email' => 'amina.kato@university.ac.ug',    'year' => 1],
+            ['name' => 'Brian Okello',  'registration_number' => '2400102', 'programme' => 'BSc Mathematics',         'email' => 'brian.okello@university.ac.ug',  'year' => 1],
+            ['name' => 'Carol Namuli',  'registration_number' => '2400103', 'programme' => 'BSc Information Systems', 'email' => 'carol.namuli@university.ac.ug',  'year' => 2],
+            ['name' => 'David Mugabi',  'registration_number' => '2400104', 'programme' => 'BSc Statistics',          'email' => 'david.mugabi@university.ac.ug',  'year' => 2],
+            ['name' => 'Esther Atim',   'registration_number' => '2400105', 'programme' => 'BSc Computer Science',    'email' => 'esther.atim@university.ac.ug',   'year' => 3],
+            ['name' => 'Felix Ochieng', 'registration_number' => '2400106', 'programme' => 'BSc Information Systems', 'email' => 'felix.ochieng@university.ac.ug', 'year' => 1],
         ];
 
         foreach ($students as $row) {
-            // Login account with the student role
             $user = User::updateOrCreate(
                 ['email' => $row['email']],
                 [
                     'name'     => $row['name'],
                     'password' => Hash::make('password'),
-                    'role'     => 'student',
                 ]
             );
+            $user->syncRoles('student');
 
-            // Matched on the unique registration number
             Student::updateOrCreate(
                 ['registration_number' => $row['registration_number']],
                 [

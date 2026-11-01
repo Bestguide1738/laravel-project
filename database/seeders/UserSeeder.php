@@ -10,14 +10,15 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Lecturer and student accounts are created in their own seeders.
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@university.ac.ug'],
             [
                 'name'     => 'System Administrator',
                 'password' => Hash::make('password'),
-                'role'     => 'admin',
             ]
         );
+
+        // Replaces any existing roles with exactly this one
+        $admin->syncRoles('admin');
     }
 }

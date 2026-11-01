@@ -1,58 +1,201 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# University Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A web-based system for managing students, courses, lecturers and course registrations, built with **Laravel** and a relational database.
 
-## About Laravel
+- **Administrators** manage students, courses, registrations and user access.
+- **Lecturers** view the courses assigned to them and the students registered for each course.
+- **Students** view the available courses, register for them and see their own registrations.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Technology
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Part | Choice |
+|---|---|
+| Framework | Laravel 13 (PHP 8.3 or newer) |
+| Database | SQLite by default, MySQL supported |
+| Roles and permissions | `spatie/laravel-permission` |
+| Front end | Blade templates, Tailwind CSS (CDN) and Lucide icons |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Requirements
 
-## Learning Laravel
+- PHP 8.3 or newer, with the `pdo_sqlite` extension (or `pdo_mysql` for MySQL)
+- Composer
+- An internet connection when viewing the pages (Tailwind CSS, Google Fonts and Lucide icons load from a CDN)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Node.js is **not** needed.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+1. **Get the code** and open the project folder.
 
-## Agentic Development
+   ```bash
+   cd school
+   ```
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+2. **Install the PHP packages.**
 
-```bash
-composer require laravel/boost --dev
+   ```bash
+   composer install
+   ```
 
-php artisan boost:install
+3. **Create the environment file** and the application key.
+
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Set up the database** (see the next section), then create the tables and sample data.
+
+   ```bash
+   php artisan migrate --seed
+   ```
+
+5. **Start the server.**
+
+   ```bash
+   php artisan serve
+   ```
+
+6. Open **http://127.0.0.1:8000** in your browser.
+
+## Database setup
+
+### Option A: SQLite (default, nothing to install)
+
+In `.env`:
+
+```env
+DB_CONNECTION=sqlite
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Create the database file if it does not exist yet:
 
-## Contributing
+```bash
+touch database/database.sqlite
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Option B: MySQL
 
-## Code of Conduct
+1. Create an empty database, for example `university`.
+2. In `.env`, set:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=university
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
 
-## Security Vulnerabilities
+3. Run `php artisan migrate --seed`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Resetting the data
 
-## License
+```bash
+php artisan migrate:fresh --seed
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This drops every table, rebuilds them and loads the sample data again. Running only `php artisan db:seed` is also safe: the seeders use `updateOrCreate`, so they never create duplicate records.
+
+### Database tables
+
+| Table | Purpose |
+|---|---|
+| `users` | Login accounts |
+| `roles`, `permissions` and the pivot tables | Roles and permissions (spatie package) |
+| `lecturers` | Lecturer records, linked to a user account |
+| `students` | Student records, linked to a user account |
+| `courses` | Courses, each assigned to one lecturer |
+| `course_registrations` | Which student is registered for which course, with a status |
+
+Relationships:
+
+- A lecturer **has many** courses; a course **belongs to** a lecturer.
+- A student and a course are **many to many** through `course_registrations`.
+- `course_registrations` has foreign keys to `students` and `courses` (deleted together with them) and a **unique index on `student_id` + `course_id`**, so a student can never register for the same course twice.
+
+## User roles and permissions
+
+| Role | Can do | Permissions |
+|---|---|---|
+| **Administrator** | Add, edit and delete students and courses; register students; approve or remove registrations | `manage students`, `manage lecturers`, `manage courses`, `manage registrations`, `manage users` |
+| **Lecturer** | See only the courses assigned to them and the students registered for them | `view assigned courses`, `view course students` |
+| **Student** | See all available courses, register for a course, see and drop their own registrations | `view available courses`, `view own registrations`, `register courses` |
+
+Access is enforced three ways: route middleware (`auth`, `role:` and `permission:`), policies (a lecturer cannot open another lecturer's course; a student cannot drop someone else's registration) and menus and buttons that only appear when the user has the matching permission.
+
+Student registrations start as **Pending** and an administrator approves them. Registration is refused when the student is already registered for the course or when the course is full.
+
+## Sample login credentials
+
+The password for every account is **`password`**. Change these before using the system anywhere real.
+
+| Role | Email |
+|---|---|
+| Administrator | `admin@university.ac.ug` |
+| Lecturer | `grace.nakato@university.ac.ug` |
+| Lecturer | `ruth.achieng@university.ac.ug` |
+| Lecturer | `peter.ssemwogerere@university.ac.ug` |
+| Lecturer | `samuel.mugisha@university.ac.ug` |
+| Student | `amina.kato@university.ac.ug` |
+| Student | `brian.okello@university.ac.ug` |
+| Student | `carol.namuli@university.ac.ug` |
+| Student | `david.mugabi@university.ac.ug` |
+| Student | `esther.atim@university.ac.ug` |
+| Student | `felix.ochieng@university.ac.ug` |
+
+Sign in at **/login**. Each user is sent to the dashboard for their role.
+
+## Main pages
+
+| Role | Pages |
+|---|---|
+| Administrator | `/admin/dashboard`, `/admin/students`, `/admin/courses`, `/admin/registrations` |
+| Lecturer | `/lecturer/dashboard`, `/lecturer/courses`, `/lecturer/courses/{id}` |
+| Student | `/student/dashboard`, `/student/courses`, `/student/registrations` |
+
+## Screenshots
+
+### Sign in
+![Sign in](docs/screenshots/01-login.png)
+
+### Administrator
+![Admin dashboard](docs/screenshots/02-admin-dashboard.png)
+![Students list](docs/screenshots/03-admin-students.png)
+![Validation error on the add student form](docs/screenshots/04-student-validation.png)
+![Courses list](docs/screenshots/05-admin-courses.png)
+![Registrations list](docs/screenshots/06-admin-registrations.png)
+![Duplicate registration error](docs/screenshots/07-duplicate-registration.png)
+
+### Student
+![Available courses](docs/screenshots/08-student-courses.png)
+![My registrations](docs/screenshots/09-student-registrations.png)
+
+### Lecturer
+![My courses](docs/screenshots/10-lecturer-courses.png)
+![Class list](docs/screenshots/11-lecturer-class-list.png)
+
+### Access control
+![403 when a student opens an admin page](docs/screenshots/12-forbidden.png)
+
+## Project structure (main parts)
+
+```
+app/
+├── Exceptions/RegistrationException.php
+├── Http/Controllers/
+│   ├── Auth/LoginController.php
+│   ├── Admin/        (Dashboard, Student, Course, Registration)
+│   ├── Lecturer/     (Dashboard, Course)
+│   └── Student/      (Dashboard, Course, Registration)
+├── Models/           (User, Student, Lecturer, Course, CourseRegistration)
+├── Policies/         (CoursePolicy, CourseRegistrationPolicy)
+└── Services/RegistrationService.php   (duplicate and capacity rules)
+config/university.php                  (programmes, departments, statuses)
+database/
+├── migrations/
+└── seeders/          (roles and permissions, users, lecturers, courses, students, registrations)
+resources/views/      (layouts, components, auth, admin, lecturer, student)
+routes/web.php
+```
